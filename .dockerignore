@@ -1,0 +1,22 @@
+# Abaikan environment lokal
+venv/
+.env
+*.pyc
+__pycache__/
+
+# Abaikan folder dataset / besar
+data/
+dataset/
+*.csv
+*.pkl
+*.h5
+
+# Abaikan file IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Abaikan git
+.git
+.gitignore
