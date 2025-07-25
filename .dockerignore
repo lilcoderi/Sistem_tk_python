@@ -1,22 +1,46 @@
-# Abaikan environment lokal
+# Abaikan virtual environment lokal
 venv/
-.env
-*.pyc
+env/
+
+# Abaikan cache
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Abaikan folder dataset / besar
-data/
-dataset/
+# Abaikan notebook dan file yang tidak dipakai
+ddtk.ipynb
+hasil_asesmen.ipynb
+hasil_asesmen.py
+predict_ddtk.py
+prediksi_awal.py
+
+# Abaikan file log & temporary
+*.log
+*.tmp
+
+# Abaikan dataset besar
 *.csv
-*.pkl
+*.xlsx
+*.zip
+*.tar
+*.tar.gz
 *.h5
+*.pt
+*.pth
+*.onnx
 
-# Abaikan file IDE
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Abaikan git
+# Abaikan konfigurasi git
 .git
 .gitignore
+.gitattributes
+
+# Abaikan environment files
+.env
+
+# Abaikan editor folders
+.vscode/
+.idea/
+
+# Abaikan folder static
+static/
