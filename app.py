@@ -84,10 +84,19 @@ def sistem_pakar_awal(row):
 
 @app.route('/prediksi', methods=['POST'])
 def prediksi_awal():
+    conn = None
+    cursor = None
     try:
-        id_siswa = request.json['id_siswa']
+        # ✅ Ambil id_siswa dari JSON request
+        id_siswa = request.json.get('id_siswa')
+        if id_siswa is None:
+            return jsonify({'error': 'id_siswa tidak ditemukan di request'}), 400
+
+        # ✅ Buka koneksi database
         conn = get_connection_prediksi_awal()
         cursor = conn.cursor(dictionary=True)
+
+        # ✅ Ambil data siswa
         query = """
         SELECT a.id AS id_siswa, a.nama_lengkap,
                b.pergaulan_dengan_teman, b.hubungan_dengan_ayah, b.hubungan_dengan_ibu, 
@@ -103,7 +112,10 @@ def prediksi_awal():
         if not row:
             return jsonify({'error': 'Data siswa tidak ditemukan'}), 404
 
+        # ✅ Jalankan sistem pakar
         prediksi, rekomendasi, catatan = sistem_pakar_awal(row)
+
+        # ✅ Simpan hasil ke database
         insert_query = """
         INSERT INTO hasil_prediksi_awal 
             (id_siswa, prediksi_awal, rekomendasi_awal, catatan_sistem_pakar, created_at, updated_at)
@@ -118,6 +130,8 @@ def prediksi_awal():
             datetime.now()
         ))
         conn.commit()
+
+        # ✅ Kirim response
         return jsonify({
             'id_siswa': id_siswa,
             'nama_siswa': row['nama_lengkap'],
@@ -125,8 +139,23 @@ def prediksi_awal():
             'rekomendasi_awal': rekomendasi,
             'catatan_sistem_pakar': catatan
         })
+
     except Exception as e:
+        # ✅ Tangani error
         return jsonify({'error': str(e)}), 500
+
+    finally:
+        # ✅ Pastikan koneksi ditutup
+        if cursor is not None:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 @app.route('/')
 def index():
@@ -407,3 +436,4 @@ def asesmen_index():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Railway otomatis mengisi PORT
     app.run(host='0.0.0.0', port=port, debug=True)
+    
