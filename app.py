@@ -22,16 +22,26 @@ import openai
 # ================== FLASK APP ==================
 app = Flask(__name__)
 
+# Ambil dari environment
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = int(os.getenv("DB_PORT"))
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+openai.api_key = OPENAI_API_KEY
+
 # =====================================================
 # ---------- FUNGSI UNTUK PREDIKSI_AWAL -------------
 # =====================================================
 def get_connection_prediksi_awal():
     return mysql.connector.connect(
-        host='afl2ht.h.filess.io',
-        port=61002,
-        user='sistemtkdb_usefulheor',
-        password='382f83f60b7560c62cad795c7e8b88ca8f9e8626',
-        database='sistemtkdb_usefulheor'
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME
     )
 
 def sistem_pakar_awal(row):
@@ -87,16 +97,13 @@ def prediksi_awal():
     conn = None
     cursor = None
     try:
-        # ✅ Ambil id_siswa dari JSON request
         id_siswa = request.json.get('id_siswa')
         if id_siswa is None:
             return jsonify({'error': 'id_siswa tidak ditemukan di request'}), 400
 
-        # ✅ Buka koneksi database
         conn = get_connection_prediksi_awal()
         cursor = conn.cursor(dictionary=True)
 
-        # ✅ Ambil data siswa
         query = """
         SELECT a.id AS id_siswa, a.nama_lengkap,
                b.pergaulan_dengan_teman, b.hubungan_dengan_ayah, b.hubungan_dengan_ibu, 
@@ -112,10 +119,8 @@ def prediksi_awal():
         if not row:
             return jsonify({'error': 'Data siswa tidak ditemukan'}), 404
 
-        # ✅ Jalankan sistem pakar
         prediksi, rekomendasi, catatan = sistem_pakar_awal(row)
 
-        # ✅ Simpan hasil ke database
         insert_query = """
         INSERT INTO hasil_prediksi_awal 
             (id_siswa, prediksi_awal, rekomendasi_awal, catatan_sistem_pakar, created_at, updated_at)
@@ -131,7 +136,6 @@ def prediksi_awal():
         ))
         conn.commit()
 
-        # ✅ Kirim response
         return jsonify({
             'id_siswa': id_siswa,
             'nama_siswa': row['nama_lengkap'],
@@ -141,32 +145,17 @@ def prediksi_awal():
         })
 
     except Exception as e:
-        # ✅ Tangani error
         return jsonify({'error': str(e)}), 500
-
     finally:
-        # ✅ Pastikan koneksi ditutup
-        if cursor is not None:
-            try:
-                cursor.close()
-            except Exception:
-                pass
-        if conn is not None:
-            try:
-                conn.close()
-            except Exception:
-                pass
-
-@app.route('/')
-def index():
-    return '✅ Flask aktif! Gunakan endpoint yang tersedia (/prediksi, /predict/<id>, /hasilasesmen)'
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 # =====================================================
 # ---------- FUNGSI UNTUK PREDICT_DDTK ---------------
 # =====================================================
 def get_connection_ddtk():
     engine = create_engine(
-        "mysql+pymysql://sistemtkdb_usefulheor:382f83f60b7560c62cad795c7e8b88ca8f9e8626@afl2ht.h.filess.io:61002/sistemtkdb_usefulheor"
+        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     return engine
 
@@ -203,8 +192,6 @@ def simpulkan_perkembangan(hasil_skor, bb_normal, tb_normal, lk_normal):
         return "Perlu Pengawasan"
     else:
         return "Perlu Rujukan Dokter"
-
-openai.api_key = "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"  # Ganti dengan API Key-mu
 
 @app.route('/predict/<int:id_siswa>', methods=['GET'])
 def predict_ddtk(id_siswa):
@@ -300,11 +287,11 @@ def predict_ddtk(id_siswa):
 # =====================================================
 def get_connection_asesmen():
     return pymysql.connect(
-        host='afl2ht.h.filess.io',
-        port=61002,
-        user='sistemtkdb_usefulheor',
-        password='382f83f60b7560c62cad795c7e8b88ca8f9e8626',
-        db='sistemtkdb_usefulheor',
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        db=DB_NAME,
         cursorclass=pymysql.cursors.DictCursor
     )
 
@@ -434,6 +421,5 @@ def asesmen_index():
 
 # ================== RUN APP ==================
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Railway otomatis mengisi PORT
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-    
