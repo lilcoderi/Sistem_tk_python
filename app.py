@@ -208,7 +208,7 @@ def predict_ddtk(id_siswa):
         ORDER BY tk.created_at
     '''
     df = pd.read_sql(query, engine)
-    if df.empty or df.shape[0] < 1:
+    if df.empty or df.shape[0] < 2:
         return jsonify({'status': 'error', 'message': 'Data tidak cukup untuk prediksi.'}), 400
 
     df['hasil_skor'] = df['hasil'].apply(konversi_json_ke_skor)
